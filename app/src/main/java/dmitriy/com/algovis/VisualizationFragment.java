@@ -145,6 +145,7 @@ public class VisualizationFragment extends Fragment {
     }
 
     public void resetVisual() {
+        seekbarLayout.setVisibility(View.INVISIBLE);
         algovisController.setElementsCount(elementsCount);
         algovisController.reset();
         algovisController.setPaused(false);

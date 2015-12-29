@@ -21,14 +21,21 @@ public class BubbleModel implements AlgovisModel {
     final List<AlgovisEntity> entities;
     List<List<Integer>> transforms;
     List<Integer> passLengths;
+    List<Integer> numbersToSort;
     WeakReference<AlgovisView> listener;
 
     public BubbleModel(int elementsCount, BubbleModel other) {
+        if (other != null) {
+            this.listener = other.listener;
+            this.numbersToSort = other.numbersToSort;
+        }
 
-        List<Integer> numbersToSort = new ArrayList<>(elementsCount);
-        Random randomGenerator = new Random();
-        for (int i = 0; i < elementsCount; i++)
-            numbersToSort.add(randomGenerator.nextInt(20));
+        if (numbersToSort == null || numbersToSort.size() != elementsCount) {
+            numbersToSort = new ArrayList<>(elementsCount);
+            Random randomGenerator = new Random();
+            for (int i = 0; i < elementsCount; i++)
+                numbersToSort.add(randomGenerator.nextInt(20));
+        }
 
         bubbleSort(new ArrayList<>(numbersToSort));
         sprites = new ArrayList<>();
@@ -43,10 +50,6 @@ public class BubbleModel implements AlgovisModel {
         entities = new ArrayList<>();
         entities.addAll(sprites);
         entities.addAll(focused);
-
-        if (other != null) {
-            this.listener = other.listener;
-        }
     }
 
     @Override
