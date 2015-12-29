@@ -7,6 +7,8 @@ import android.view.animation.LinearInterpolator;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import dmitriy.com.algovis.interfaces.AlgovisController;
 import dmitriy.com.algovis.interfaces.AlgovisModel;
@@ -14,50 +16,115 @@ import dmitriy.com.algovis.interfaces.AlgovisModel;
 public class BubbleController implements AlgovisController {
     BubbleModel bubbleModel;
     List<List<Integer>> transform;
-    float slidePeriod = 1500;
+    float normalSpeed = 1400;
+    float fastSpeed = 500;
+    float slidePeriod = normalSpeed;
     int algorithmPass;
     Rect workRect = new Rect();
     Iterator<Integer> it;
     Integer nextSwap = Integer.MIN_VALUE;
     TimeInterpolator interpolator = new LinearInterpolator();
+    private Queue<Boolean> forceSingleUpdateRequests = new ConcurrentLinkedQueue<>();
+    boolean forceSingleUpdate = false;
+    volatile boolean reset = true;
+    volatile boolean paused = true;
+    volatile int elemCount;
 
-    public BubbleController() {
-        reset();
+    public BubbleController(int elemCount) {
+        setElementsCount(elemCount);
+        doReset();
     }
 
+    @Override
+    public void setElementsCount(int elementsCount) {
+        if (this.elemCount != elementsCount)
+            reset();
+        this.elemCount = elementsCount;
+    }
+
+    @Override
     public void reset() {
-        createModel();
-        showSprites(bubbleModel.getFocused(), true);
-        updateTransformsIterator();
+        reset = true;
     }
 
-    private void createModel() {
-        bubbleModel = new BubbleModel();
-        algorithmPass = 0;
-        transform = bubbleModel.getTransforms();
-        it = null;
-    }
-
+    @Override
     public AlgovisModel getModel() {
         return bubbleModel;
     }
 
-    public void onUpdate(long deltaTime) {
-        List<Sprite> slots = bubbleModel.getSlots();
-        List<Sprite> sprites = bubbleModel.getSprites();
-        List<Sprite> focused = bubbleModel.getFocused();
+    @Override
+    public void setPaused(boolean paused) {
+        this.paused = paused;
+    }
 
-        updateSprites(sprites, slots, deltaTime);
-        updateSprites(focused, slots, deltaTime);
+    @Override
+    public boolean getPaused() {
+        return this.paused;
+    }
 
-        if (!moveRegular(sprites, focused.get(0).getFromSlot())) {
-            if (!moveFocused(focused, bubbleModel.getPassLength(algorithmPass))) {
-                if (!startNextPass(focused)) {
-                    showSprites(focused, false);
+    @Override
+    public void forceSingleUpdate() {
+        forceSingleUpdateRequests.add(Boolean.TRUE);
+    }
+
+    @Override
+    public boolean toggleFastForward() {
+        if (slidePeriod == normalSpeed)
+            slidePeriod = fastSpeed;
+        else
+            slidePeriod = normalSpeed;
+        return (slidePeriod == normalSpeed);
+    }
+
+    @Override
+    public boolean onUpdate(long deltaTime) {
+        boolean result = true;
+
+        if (reset)
+            doReset();
+
+        if (forceSingleUpdateRequests.remove(Boolean.TRUE))
+            forceSingleUpdate = true;
+
+        if (!paused || forceSingleUpdate) {
+            if (forceSingleUpdate)
+                deltaTime = 0;
+
+            List<Sprite> slots = bubbleModel.getSlots();
+            List<Sprite> sprites = bubbleModel.getSprites();
+            List<Sprite> focused = bubbleModel.getFocused();
+
+            updateSprites(sprites, slots, deltaTime);
+            updateSprites(focused, slots, deltaTime);
+
+            if (!moveRegular(sprites, focused.get(0).getFromSlot())) {
+                if (!moveFocused(focused, bubbleModel.getPassLength(algorithmPass))) {
+                    if (!startNextPass(focused)) {
+                        showSprites(focused, false);
+                        result = false;
+                    }
                 }
             }
+
+            if (bubbleModel.onModelUpdated())
+                forceSingleUpdate = false;
         }
-        bubbleModel.onModelUpdated();
+
+        return result;
+    }
+
+    private void doReset() {
+        createModel();
+        showSprites(bubbleModel.getFocused(), true);
+        updateTransformsIterator();
+        reset = false;
+    }
+
+    private void createModel() {
+        bubbleModel = new BubbleModel(elemCount, bubbleModel);
+        algorithmPass = 0;
+        transform = bubbleModel.getTransforms();
+        it = null;
     }
 
     /**

@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">BubbleVis</string>
-    <string name="hello_world">Hello world!</string>
-    <string name="action_settings">Settings</string>
+    <string name="app_name">Bubble sort</string>
+    <string name="elements_count">Elements count %d</string>
 </resources>

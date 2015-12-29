@@ -1,9 +1,11 @@
 package dmitriy.com.algovis.bubblesort;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -19,14 +21,16 @@ public class BubbleModel implements AlgovisModel {
     final List<AlgovisEntity> entities;
     List<List<Integer>> transforms;
     List<Integer> passLengths;
+    WeakReference<AlgovisView> listener;
 
-    Set<AlgovisView> listeners = Collections.newSetFromMap(new WeakHashMap<AlgovisView, Boolean>());
+    public BubbleModel(int elementsCount, BubbleModel other) {
 
-    public BubbleModel() {
+        List<Integer> numbersToSort = new ArrayList<>(elementsCount);
+        Random randomGenerator = new Random();
+        for (int i = 0; i < elementsCount; i++)
+            numbersToSort.add(randomGenerator.nextInt(20));
 
-        List<Integer> numbersToSort = Arrays.asList(1, 19, 2, 0, 3);
         bubbleSort(new ArrayList<>(numbersToSort));
-
         sprites = new ArrayList<>();
         slots = new ArrayList<>();
         for (Integer i : numbersToSort) {
@@ -39,15 +43,20 @@ public class BubbleModel implements AlgovisModel {
         entities = new ArrayList<>();
         entities.addAll(sprites);
         entities.addAll(focused);
+
+        if (other != null) {
+            this.listener = other.listener;
+        }
     }
 
     @Override
-    public void onModelUpdated() {
-        for (AlgovisView l : listeners) {
-            if (l != null) {
-                l.onModelChanged(this);
-            }
+    public boolean onModelUpdated() {
+        if (listener != null) {
+            AlgovisView l = listener.get();
+            if (l != null)
+                return l.onModelChanged(this);
         }
+        return false;
     }
 
     @Override
@@ -61,7 +70,7 @@ public class BubbleModel implements AlgovisModel {
 
     @Override
     public void subsribeWith(AlgovisView subscriber) {
-        listeners.add(subscriber);
+        listener = new WeakReference<>(subscriber);
     }
 
     public List<List<Integer>> getTransforms() {

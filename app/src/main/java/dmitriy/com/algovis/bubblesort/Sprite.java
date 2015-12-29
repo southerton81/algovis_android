@@ -4,6 +4,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.text.TextUtils;
 
 import dmitriy.com.algovis.interfaces.AlgovisEntity;
@@ -27,9 +28,11 @@ public class Sprite implements AlgovisEntity {
 
         Paint textPaint = new Paint();
         textPaint.setColor(Color.BLACK);
-        textPaint.setStyle(Paint.Style.STROKE);
+        textPaint.setTypeface(Typeface.defaultFromStyle(Typeface.NORMAL));
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setAntiAlias(true);
+        textPaint.setStyle(Paint.Style.FILL);
+
         sprite.textPaint = textPaint;
 
         return sprite;
@@ -70,17 +73,20 @@ public class Sprite implements AlgovisEntity {
 
     @Override
     public void onPaint(Canvas c) {
-        if (isVisible) {
+        if (isVisible && !position.isEmpty()) {
+
+            offsetPosition.set(position);
+            int offset = position.width() / 10;
+            offsetPosition.inset(offset, offset);
+
             if (paint != null) {
-                offsetPosition.set(position);
-                offsetPosition.inset(10, 10);
                 c.drawRect(offsetPosition, paint);
             }
 
             if (!TextUtils.isEmpty(text) && textPaint != null) {
-                int xPos = position.left + (position.width() / 2);
-                int yPos = (int) (position.top
-                        + ((position.height() / 2)
+                int xPos = offsetPosition.left + (offsetPosition.width() / 2);
+                int yPos = (int) (offsetPosition.top
+                        + ((offsetPosition.height() / 2)
                         - ((textPaint.descent() + textPaint.ascent()) / 2)));
                 c.drawText(text, xPos, yPos, textPaint);
             }
