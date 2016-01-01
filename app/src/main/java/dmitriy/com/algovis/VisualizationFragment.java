@@ -88,9 +88,17 @@ public class VisualizationFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_main, container, false);
-        launchControllerThread((AlgovisView) v.findViewById(R.id.visSurfaceView));
-        createSeekbar(v);
         return v;
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        View v = getView();
+        if (v != null) {
+            launchControllerThread((AlgovisView) v.findViewById(R.id.visSurfaceView));
+            createSeekbar(v);
+        }
     }
 
     private void launchControllerThread(AlgovisView algovisView) {

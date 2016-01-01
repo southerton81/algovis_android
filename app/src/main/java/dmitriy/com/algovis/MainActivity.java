@@ -33,6 +33,21 @@ public class MainActivity extends AppCompatActivity implements  VisualizationFra
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         FabToolbar fabToolbar = (FabToolbar) findViewById(R.id.fabtoolbar);
